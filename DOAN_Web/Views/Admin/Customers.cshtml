@@ -1,0 +1,53 @@
+﻿@model List<ApplicationUser>
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">Quản lý khách hàng</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Ngày đăng ký</th>
+                            <th>Tổng đơn hàng</th>
+                            <th>Tổng chi tiêu</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var customer in Model)
+                        {
+                            var orderCount = ViewBag.CustomerOrders.ContainsKey(customer.Id) ? ViewBag.CustomerOrders[customer.Id].Count : 0;
+                            var totalSpent = ViewBag.CustomerOrders.ContainsKey(customer.Id) ? ViewBag.CustomerOrders[customer.Id].Sum : 0;
+                            
+                            <tr>
+                                <td>@customer.FullName</td>
+                                <td>@customer.Email</td>
+                                <td>@customer.PhoneNumber</td>
+                                <td>@customer.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="badge bg-info">@orderCount đơn</span>
+                                </td>
+                                <td>@totalSpent.ToString("N0") ₫</td>
+                                <td>
+                                    <a asp-action="CustomerDetail" asp-route-id="@customer.Id" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

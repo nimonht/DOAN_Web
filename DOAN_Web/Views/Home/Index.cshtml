@@ -1,8 +1,167 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<Product>
+@{
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Section with Spline -->
+<section class="hero-section position-relative" style="height: 500px; overflow: hidden;">
+    <iframe src='https://my.spline.design/particleshand-49wVLFJ2G8ldTlyBtqRbyQaB/' frameborder='0' width='100%' height='100%' style="position: absolute; top: 0; left: 0;"></iframe>
+    <div class="position-absolute top-50 start-50 translate-middle text-center text-white" style="z-index: 10;">
+        <h1 class="display-4 fw-bold mb-3" style="color: gray; mix-blend-mode: lighten">Kết nối tri thức</h1>
+        <a asp-controller="Product" asp-action="Search" class="btn btn-outline-lg btn-lg shadow-lg" style="color: gray; backdrop-filter: blur(10px);">Mua sắm ngay</a>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Sách nổi bật</h2>
+        <a asp-controller="Product" asp-action="Search" class="text-decoration-none text-primary fw-semibold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+    </div>
+    
+    <div class="row g-4 product-grid">
+        @foreach (var product in Model)
+        {
+            <div class="col-lg-3 col-md-4 col-sm-6 product-item">
+                <div class="card h-100 shadow-sm border-0 product-card">
+                    <a href="/sach/@product.Slug">
+                        <img src="@product.CoverImageUrl" class="card-img-top" alt="@product.Title" style="height: 300px; object-fit: cover;">
+                    </a>
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">
+                            <a href="/sach/@product.Slug" class="text-decoration-none text-dark fw-semibold">@product.Title</a>
+                        </h6>
+                        <p class="text-secondary small mb-2">@product.Author.Name</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-danger fw-bold">@product.Price.ToString("N0") ₫</span>
+                            @if (product.StockQty > 0)
+                            {
+                                <button class="btn btn-sm btn-outline-primary add-to-cart-btn" 
+                                        data-product-id="@product.ProductId" 
+                                        data-product-title="@product.Title">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Hết hàng</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-dark">Danh mục sách</h2>
+            <button class="btn btn-outline-primary btn-sm" id="viewAllCategories">Xem tất cả <i class="bi bi-arrow-right"></i></button>
+        </div>
+        <div class="row g-3">
+            @if (ViewBag.Categories != null)
+            {
+                int count = 0;
+                foreach (var category in (List<Category>)ViewBag.Categories)
+                {
+                    if (count >= 8) break; // Show only 8 categories on homepage
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <a href="/danh-muc/@category.Slug" class="text-decoration-none">
+                            <div class="card text-center shadow-sm border-0 category-card">
+                                <div class="card-body">
+                                    <i class="bi bi-book fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0 text-dark">@category.Name</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    count++;
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load cart count
+            updateCartCount();
+            
+            // View all categories button - opens dropdown
+            $('#viewAllCategories').click(function() {
+                $('#categoryDropdownTrigger').trigger('click');
+            });
+            
+            // GSAP animations for product cards
+            gsap.from(".product-item", {
+                opacity: 0,
+                y: 50,
+                stagger: 0.1,
+                duration: 0.6,
+                ease: "power2.out"
+            });
+            
+            // Category card hover animation
+            $('.category-card').hover(
+                function() {
+                    anime({
+                        targets: this,
+                        scale: 1.05,
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                },
+                function() {
+                    anime({
+                        targets: this,
+                        scale: 1,
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                }
+            );
+            
+            // Add to cart functionality
+            $('.add-to-cart-btn').click(function() {
+                var button = $(this);
+                var productId = button.data('product-id');
+                var productTitle = button.data('product-title');
+                
+                $.ajax({
+                    url: '/cart/them',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        productId: productId,
+                        quantity: 1
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update cart count
+                            updateCartCount();
+                            
+                            // Show success message
+                            showToast('Đã thêm "' + productTitle + '" vào giỏ hàng', 'success');
+                            
+                            // Button animation
+                            anime({
+                                targets: button[0],
+                                scale: [1, 1.2, 1],
+                                duration: 500
+                            });
+                        } else {
+                            showToast(response.message || 'Có lỗi xảy ra', 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'error');
+                    }
+                });
+            });
+        });
+    </script>
+}

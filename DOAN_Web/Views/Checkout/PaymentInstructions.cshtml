@@ -1,0 +1,65 @@
+﻿@model Order
+@{
+    ViewData["Title"] = "Hướng dẫn thanh toán";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="alert alert-success">
+                <h4><i class="bi bi-check-circle"></i> Đặt hàng thành công!</h4>
+                <p class="mb-0">Mã đơn hàng của bạn là: <strong>@Model.OrderNumber</strong></p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Hướng dẫn thanh toán</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Thông tin chuyển khoản:</h6>
+                    <ul>
+                        <li><strong>Ngân hàng:</strong> Ngân hàng TMCP Á Châu (ACB)</li>
+                        <li><strong>Số tài khoản:</strong> 123456789</li>
+                        <li><strong>Chủ tài khoản:</strong> NGUYEN VAN A</li>
+                        <li><strong>Số tiền:</strong> <span class="text-danger fw-bold">@Model.Total.ToString("N0") ₫</span></li>
+                        <li><strong>Nội dung:</strong> @Model.OrderNumber</li>
+                    </ul>
+                    
+                    <div class="text-center my-4">
+                        <img src="/images/payment-qr.png" alt="QR Code" class="img-fluid" style="max-width: 300px;" 
+                             onerror="this.style.display='none'">
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>Tải lên ảnh chuyển khoản:</h6>
+                    <form asp-action="UploadPaymentProof" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="id" value="@Model.OrderId" />
+                        
+                        <div class="mb-3">
+                            <input type="file" name="paymentImage" class="form-control" accept="image/*" required>
+                            <small class="text-muted">Chấp nhận file JPG, PNG. Tối đa 5MB.</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Tải lên
+                        </button>
+                    </form>
+                    
+                    <div class="alert alert-info mt-4">
+                        <small>
+                            <i class="bi bi-info-circle"></i> 
+                            Sau khi chuyển khoản, vui lòng tải lên ảnh chứng từ. 
+                            Chúng tôi sẽ xác nhận và xử lý đơn hàng của bạn trong thời gian sớm nhất.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">Về trang chủ</a>
+                <a asp-controller="Account" asp-action="DonHangCuaToi" class="btn btn-outline-secondary">Xem đơn hàng</a>
+            </div>
+        </div>
+    </div>
+</div>

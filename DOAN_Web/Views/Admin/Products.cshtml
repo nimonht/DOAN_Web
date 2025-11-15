@@ -1,0 +1,111 @@
+﻿@model List<Product>
+@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý sản phẩm</h2>
+        <a asp-action="AddProduct" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Thêm sản phẩm mới
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Tác giả</th>
+                            <th>Giá</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@product.CoverImageUrl" alt="@product.Title" 
+                                         style="width: 50px; height: 60px; object-fit: cover;" class="rounded">
+                                </td>
+                                <td>
+                                    <strong>@product.Title</strong><br>
+                                    <small class="text-muted">@product.ISBN</small>
+                                </td>
+                                <td>@product.Author.Name</td>
+                                <td>@product.Price.ToString("N0") ₫</td>
+                                <td>
+                                    @if (product.StockQty > 10)
+                                    {
+                                        <span class="badge bg-success">@product.StockQty</span>
+                                    }
+                                    else if (product.StockQty > 0)
+                                    {
+                                        <span class="badge bg-warning">@product.StockQty</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">@product.StockQty</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (product.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Ngừng bán</span>
+                                    }
+                                </td>
+                                <td>@product.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="EditProduct" asp-route-id="@product.ProductId" 
+                                           class="btn btn-outline-primary" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="deleteProduct(@product.ProductId)" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteProduct(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+                $.ajax({
+                    url: '/admin/san-pham/xoa/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra khi xóa sản phẩm');
+                    }
+                });
+            }
+        }
+    </script>
+}

@@ -1,0 +1,216 @@
+﻿@model CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="container my-5">
+    <h2 class="mb-4">Giỏ hàng của bạn</h2>
+    
+    @if (Model.Items == null || !Model.Items.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-cart-x display-1 text-muted"></i>
+            <h4 class="mt-3">Giỏ hàng trống</h4>
+            <p class="text-muted">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Tiếp tục mua sắm</a>
+        </div>
+    }
+    else
+    {
+        <div class="row cart-layout">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th>Giá</th>
+                                        <th>Số lượng</th>
+                                        <th>Tổng</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr data-product-id="@item.ProductId">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="@item.CoverImageUrl" alt="@item.Title" class="cart-item-image me-3 rounded">
+                                                    <div>
+                                                        <h6 class="mb-0">@item.Title</h6>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="product-price">@item.Price.ToString("N0")</span> ₫
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="input-group" style="width: 130px;">
+                                                    <button class="btn btn-outline-secondary btn-sm decrease-qty" type="button">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                    <input type="number" class="form-control form-control-sm text-center quantity-input" 
+                                                           value="@item.Quantity" min="1" max="99">
+                                                    <button class="btn btn-outline-secondary btn-sm increase-qty" type="button">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="item-subtotal fw-bold">@item.Subtotal.ToString("N0")</span> ₫
+                                            </td>
+                                            <td class="align-middle">
+                                                <button class="btn btn-sm btn-outline-danger remove-item">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card sticky-top" style="top: 90px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Tổng đơn hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tổng tạm tính:</span>
+                            <span id="cart-total" class="fw-bold">@Model.Total.ToString("N0") ₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Phí vận chuyển:</span>
+                            <span>30,000 ₫</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Tổng cộng:</strong>
+                            <strong class="text-danger" id="cart-grand-total">@((Model.Total + 30000).ToString("N0")) ₫</strong>
+                        </div>
+                        
+                        <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100">
+                            Tiến hành thanh toán
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Increase quantity
+            $('.increase-qty').click(function() {
+                var $row = $(this).closest('tr');
+                var $input = $row.find('.quantity-input');
+                var newQty = parseInt($input.val()) + 1;
+                if (newQty <= 99) {
+                    $input.val(newQty);
+                    updateCartItem($row, newQty);
+                }
+            });
+            
+            // Decrease quantity
+            $('.decrease-qty').click(function() {
+                var $row = $(this).closest('tr');
+                var $input = $row.find('.quantity-input');
+                var newQty = parseInt($input.val()) - 1;
+                if (newQty >= 1) {
+                    $input.val(newQty);
+                    updateCartItem($row, newQty);
+                }
+            });
+            
+            // Manual quantity change
+            $('.quantity-input').change(function() {
+                var $row = $(this).closest('tr');
+                var newQty = parseInt($(this).val());
+                if (newQty >= 1 && newQty <= 99) {
+                    updateCartItem($row, newQty);
+                } else {
+                    $(this).val(1);
+                    updateCartItem($row, 1);
+                }
+            });
+            
+            // Remove item
+            $('.remove-item').click(function() {
+                var $row = $(this).closest('tr');
+                var productId = $row.data('product-id');
+                
+                if (confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                    $.post('/cart/xoa/' + productId, function(response) {
+                        if (response.success) {
+                            $row.fadeOut(function() {
+                                $(this).remove();
+                                updateCartTotals();
+                                updateCartCount();
+                                
+                                // Reload if cart is empty
+                                if ($('tbody tr').length === 0) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            
+            function updateCartItem($row, quantity) {
+                var productId = $row.data('product-id');
+                
+                $.ajax({
+                    url: '/cart/cap-nhat',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        productId: productId,
+                        quantity: quantity
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update subtotal
+                            $row.find('.item-subtotal').text(response.subtotal.toLocaleString('vi-VN'));
+                            
+                            // Update totals
+                            $('#cart-total').text(response.total.toLocaleString('vi-VN') + ' ₫');
+                            $('#cart-grand-total').text((response.total + 30000).toLocaleString('vi-VN') + ' ₫');
+                            
+                            // Update cart count
+                            $('#cart-count').text(response.cartCount);
+                        } else {
+                            alert(response.message);
+                        }
+                    }
+                });
+            }
+            
+            function updateCartTotals() {
+                var total = 0;
+                $('tbody tr').each(function() {
+                    var subtotal = parseInt($(this).find('.item-subtotal').text().replace(/[^0-9]/g, ''));
+                    total += subtotal;
+                });
+                
+                $('#cart-total').text(total.toLocaleString('vi-VN') + ' ₫');
+                $('#cart-grand-total').text((total + 30000).toLocaleString('vi-VN') + ' ₫');
+            }
+        });
+    </script>
+}

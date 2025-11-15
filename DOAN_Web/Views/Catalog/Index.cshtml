@@ -1,0 +1,63 @@
+﻿@model List<DOAN_Web.Models.Category>
+@{
+    ViewData["Title"] = "Danh mục sách";
+}
+
+<div class="container my-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active">Danh mục</li>
+        </ol>
+    </nav>
+    
+    <h2 class="mb-4 text-dark">Danh mục sách</h2>
+    
+    <div class="row g-4">
+        @foreach (var category in Model)
+        {
+            var productCount = category.ProductCategories.Count(pc => pc.Product != null && pc.Product.Status == "Active");
+            var backgroundStyle = !string.IsNullOrEmpty(category.BackgroundImageUrl) 
+                ? $"background-image: url('{category.BackgroundImageUrl}');" 
+                : "background: linear-gradient(135deg, #f37021 0%, #8b4513 100%);";
+            
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <a href="/danh-muc/@category.Slug" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 category-card" style="@backgroundStyle">
+                        <div class="category-card-content">
+                            <i class="bi bi-book"></i>
+                            <h5 class="card-title fw-semibold">@category.Name</h5>
+                            <p class="card-text small mb-2">@category.Description</p>
+                            <span class="badge bg-light text-dark">@productCount sản phẩm</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.category-card').hover(
+                function() {
+                    anime({
+                        targets: this,
+                        scale: 1.05,
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                },
+                function() {
+                    anime({
+                        targets: this,
+                        scale: 1,
+                        duration: 300,
+                        easing: 'easeOutQuad'
+                    });
+                }
+            );
+        });
+    </script>
+}

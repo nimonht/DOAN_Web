@@ -1,0 +1,172 @@
+﻿@model List<Category>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý danh mục</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+            <i class="bi bi-plus-circle"></i> Thêm danh mục mới
+        </button>
+    </div>
+    
+    <div class="row g-4">
+        @foreach (var category in Model)
+        {
+            var productCount = category.ProductCategories.Count();
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(category.BackgroundImageUrl))
+                    {
+                        <img src="@category.BackgroundImageUrl" class="card-img-top" alt="@category.Name" 
+                             style="height: 150px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-primary d-flex align-items-center justify-content-center" 
+                             style="height: 150px;">
+                            <i class="bi bi-book display-4 text-white"></i>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@category.Name</h5>
+                        <p class="card-text text-muted small">@category.Description</p>
+                        <p class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-box"></i> @productCount sản phẩm
+                            </small>
+                        </p>
+                        <div class="btn-group btn-group-sm w-100">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="editCategory(@category.CategoryId, '@category.Name', '@category.Slug', '@category.Description', '@category.BackgroundImageUrl')">
+                                <i class="bi bi-pencil"></i> Sửa
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" 
+                                    onclick="deleteCategory(@category.CategoryId)">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm danh mục mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AddCategory" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên danh mục</label>
+                        <input type="text" name="Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Slug (URL)</label>
+                        <input type="text" name="Slug" class="form-control" required>
+                        <small class="text-muted">VD: sach-van-hoc</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea name="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh nền</label>
+                        <input type="file" name="BackgroundImage" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Thêm danh mục</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa danh mục</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="EditCategory" method="post" enctype="multipart/form-data">
+                <input type="hidden" id="edit-categoryid" name="CategoryId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên danh mục</label>
+                        <input type="text" id="edit-name" name="Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Slug (URL)</label>
+                        <input type="text" id="edit-slug" name="Slug" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="edit-description" name="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh nền hiện tại</label>
+                        <div id="current-image-preview"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh nền mới (để trống nếu không đổi)</label>
+                        <input type="file" name="BackgroundImage" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editCategory(id, name, slug, description, imageUrl) {
+            $('#edit-categoryid').val(id);
+            $('#edit-name').val(name);
+            $('#edit-slug').val(slug);
+            $('#edit-description').val(description);
+            
+            if (imageUrl) {
+                $('#current-image-preview').html('<img src="' + imageUrl + '" class="img-fluid rounded" style="max-height: 150px;">');
+            } else {
+                $('#current-image-preview').html('<p class="text-muted">Chưa có ảnh nền</p>');
+            }
+            
+            var modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            modal.show();
+        }
+        
+        function deleteCategory(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa danh mục này? Tất cả sản phẩm trong danh mục sẽ bị ảnh hưởng.')) {
+                $.ajax({
+                    url: '/admin/danh-muc/xoa/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra khi xóa danh mục');
+                    }
+                });
+            }
+        }
+    </script>
+}

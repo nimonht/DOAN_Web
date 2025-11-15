@@ -1,0 +1,189 @@
+﻿@model Order
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Chi tiết đơn hàng #@Model.OrderNumber</h2>
+        <a asp-action="Orders" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-3">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Thông tin đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Mã đơn:</strong><br>
+                            <span class="badge bg-light text-dark fs-6">@Model.OrderNumber</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Trạng thái:</strong><br>
+                            @switch (Model.Status)
+                            {
+                                case "ChoThanhToan":
+                                    <span class="badge bg-warning text-dark fs-6">Chờ thanh toán</span>
+                                    break;
+                                case "DaXacNhan":
+                                    <span class="badge bg-info fs-6">Đã xác nhận</span>
+                                    break;
+                                case "DangGiao":
+                                    <span class="badge bg-primary fs-6">Đang giao</span>
+                                    break;
+                                case "HoanThanh":
+                                    <span class="badge bg-success fs-6">Hoàn thành</span>
+                                    break;
+                                case "DaHuy":
+                                    <span class="badge bg-danger fs-6">Đã hủy</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Khách hàng:</strong> @Model.CustomerName</p>
+                            <p class="mb-2"><strong>Số điện thoại:</strong> @Model.CustomerPhone</p>
+                            <p class="mb-2"><strong>Email:</strong> @Model.User.Email</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Ngày đặt:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                            @if (Model.UpdatedAt.HasValue)
+                            {
+                                <p class="mb-2"><strong>Cập nhật cuối:</strong> @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                            }
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="mb-2"><strong>Địa chỉ giao hàng:</strong></p>
+                    <p class="text-muted">@Model.ShippingAddress</p>
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <p class="mb-2"><strong>Ghi chú:</strong></p>
+                        <p class="text-muted">@Model.Notes</p>
+                    }
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Sản phẩm</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Giá</th>
+                                    <th>Số lượng</th>
+                                    <th class="text-end">Tổng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.OrderItems)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.Product.Title</strong>
+                                        </td>
+                                        <td>@item.UnitPrice.ToString("N0") ₫</td>
+                                        <td>@item.Quantity</td>
+                                        <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("N0")) ₫</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Tổng tạm tính:</strong></td>
+                                    <td class="text-end">@Model.Subtotal.ToString("N0") ₫</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Phí vận chuyển:</strong></td>
+                                    <td class="text-end">@Model.ShippingFee.ToString("N0") ₫</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                                    <td class="text-end"><strong class="text-danger fs-5">@Model.Total.ToString("N0") ₫</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            @if (Model.PaymentProof != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Chứng từ thanh toán</h5>
+                    </div>
+                    <div class="card-body">
+                        <img src="@Model.PaymentProof.ImageUrl" alt="Payment Proof" class="img-fluid mb-3 rounded">
+                        <p class="mb-2"><small class="text-muted">Tải lên: @Model.PaymentProof.UploadedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+                        
+                        @if (Model.PaymentProof.VerifiedAt == null && Model.Status == "ChoThanhToan")
+                        {
+                            <form asp-action="VerifyPayment" asp-route-id="@Model.OrderId" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle"></i> Xác nhận thanh toán
+                                </button>
+                            </form>
+                        }
+                        else if (Model.PaymentProof.VerifiedAt != null)
+                        {
+                            <div class="alert alert-success mb-0">
+                                <i class="bi bi-check-circle-fill"></i> Đã xác nhận thanh toán
+                                <br><small>@Model.PaymentProof.VerifiedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (Model.Status == "ChoThanhToan")
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> Khách hàng chưa upload chứng từ thanh toán
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Cập nhật trạng thái</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UpdateOrderStatus" asp-route-id="@Model.OrderId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Chọn trạng thái mới</label>
+                            <select name="status" class="form-select">
+                                <option value="ChoThanhToan" selected="@(Model.Status == "ChoThanhToan")">Chờ thanh toán</option>
+                                <option value="DaXacNhan" selected="@(Model.Status == "DaXacNhan")">Đã xác nhận</option>
+                                <option value="DangGiao" selected="@(Model.Status == "DangGiao")">Đang giao</option>
+                                <option value="HoanThanh" selected="@(Model.Status == "HoanThanh")">Hoàn thành</option>
+                                <option value="DaHuy" selected="@(Model.Status == "DaHuy")">Đã hủy</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-arrow-repeat"></i> Cập nhật trạng thái
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

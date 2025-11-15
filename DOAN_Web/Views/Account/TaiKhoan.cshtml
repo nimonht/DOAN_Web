@@ -1,0 +1,42 @@
+﻿@model ApplicationUser
+@{
+    ViewData["Title"] = "Tài khoản";
+}
+
+<div class="container my-5">
+    <h2 class="mb-4">Thông tin tài khoản</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Thông tin cá nhân</h5>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted">Họ và tên:</label>
+                        <p class="fw-bold">@Model.FullName</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted">Email:</label>
+                        <p class="fw-bold">@Model.Email</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted">Số điện thoại:</label>
+                        <p class="fw-bold">@Model.PhoneNumber</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted">Ngày đăng ký:</label>
+                        <p class="fw-bold">@Model.CreatedAt.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    
+                    <a asp-controller="Account" asp-action="DonHangCuaToi" class="btn btn-primary">
+                        <i class="bi bi-box-seam"></i> Đơn hàng của tôi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

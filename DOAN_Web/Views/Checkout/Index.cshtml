@@ -1,0 +1,116 @@
+﻿@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+    var cart = (CartViewModel)ViewBag.Cart;
+}
+
+<div class="container my-5">
+    <h2 class="mb-4">Thanh toán</h2>
+    
+    <div class="row checkout-layout">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Thông tin giao hàng</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="PlaceOrder" method="post">
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CustomerName" class="form-label"></label>
+                                <input asp-for="CustomerName" class="form-control" maxlength="100" />
+                                <span asp-validation-for="CustomerName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CustomerPhone" class="form-label"></label>
+                                <input asp-for="CustomerPhone" class="form-control" maxlength="15" />
+                                <span asp-validation-for="CustomerPhone" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AddressLine1" class="form-label"></label>
+                            <input asp-for="AddressLine1" class="form-control" maxlength="200" />
+                            <span asp-validation-for="AddressLine1" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AddressLine2" class="form-label"></label>
+                            <input asp-for="AddressLine2" class="form-control" placeholder="Số nhà, tên đường..." maxlength="200" />
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="City" class="form-label"></label>
+                                <select asp-for="City" class="form-select">
+                                    <option value="">Chọn tỉnh/thành</option>
+                                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                                    <option value="Hà Nội">Hà Nội</option>
+                                    <option value="Đà Nẵng">Đà Nẵng</option>
+                                    <option value="Cần Thơ">Cần Thơ</option>
+                                </select>
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="District" class="form-label"></label>
+                                <input asp-for="District" class="form-control" placeholder="Quận 1" />
+                                <span asp-validation-for="District" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Ward" class="form-label"></label>
+                                <input asp-for="Ward" class="form-control" placeholder="Phường Bến Nghé" />
+                                <span asp-validation-for="Ward" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes" class="form-control" rows="3" maxlength="500"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Đặt hàng</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 90px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var item in cart.Items)
+                    {
+                        <div class="d-flex mb-3 pb-3 border-bottom">
+                            <img src="@item.CoverImageUrl" alt="@item.Title" style="width: 50px; height: 60px; object-fit: cover;" class="me-2 rounded">
+                            <div class="flex-grow-1">
+                                <small class="d-block mb-1">@item.Title</small>
+                                <small class="text-muted">@item.Quantity x @item.Price.ToString("N0") ₫</small>
+                            </div>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tổng tạm tính:</span>
+                        <span class="fw-bold">@cart.Total.ToString("N0") ₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Phí vận chuyển:</span>
+                        <span>30,000 ₫</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Tổng cộng:</strong>
+                        <strong class="text-danger">@((cart.Total + 30000).ToString("N0")) ₫</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

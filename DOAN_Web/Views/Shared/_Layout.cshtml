@@ -1,50 +1,183 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - DOAN_Web</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - Shopjoy - Nhà Sách Trực Tuyến</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/DOAN_Web.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">DOAN_Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+<body class="d-flex flex-column min-vh-100">
+    <header id="mainHeader" class="sticky-navbar">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-book-half"></i> Shopjoy
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" href="#" id="categoryDropdownTrigger">Danh mục</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Product" asp-action="Search">Sách mới</a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Search Form -->
+                    <form class="d-flex me-3" asp-controller="Product" asp-action="Search" method="get">
+                        <div class="input-group">
+                            <input class="form-control" type="search" placeholder="Tìm kiếm sách..." name="q" aria-label="Search">
+                            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+                        </div>
+                    </form>
+                    
+                    <!-- Cart and User -->
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" asp-area="" asp-controller="Cart" asp-action="Index">
+                                <i class="bi bi-cart3 fs-5"></i>
+                                <span class="top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="TaiKhoan">Tài khoản</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="DonHangCuaToi">Đơn hàng của tôi</a></li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index">Quản trị</a></li>
+                                    }
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="DangXuat" method="post">
+                                            <button type="submit" class="dropdown-item">Đăng xuất</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="DangNhap">
+                                    <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="DangKy">Đăng ký</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
+        
+        <!-- Category Dropdown Panel -->
+        <div id="categoryDropdown" class="category-dropdown shadow-lg">
+            <div class="container py-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="bi bi-grid-3x3-gap-fill text-primary"></i> Danh mục sách</h5>
+                    <button type="button" class="btn-close" id="closeCategoryDropdown"></button>
+                </div>
+                <div class="row g-3" id="categoriesContainer">
+                    <!-- Categories will be loaded here dynamically -->
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - DOAN_Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main role="main" class="flex-fill">
+        @if (TempData["Success"] != null)
+        {
+            <div class="container mt-3">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="container mt-3">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        }
+        
+        @RenderBody()
+    </main>
+
+    <footer class="bg-dark text-white mt-auto">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="text-white"><i class="bi bi-book-half"></i> Shopjoy</h5>
+                    <p class="text-white-50">Nhà sách trực tuyến uy tín hàng đầu Việt Nam</p>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-white">Liên kết nhanh</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50 text-decoration-none hover-white">Về chúng tôi</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none hover-white">Chính sách</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none hover-white">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-white">Thanh toán</h6>
+                    <p class="text-white-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="50" viewBox="0 0 48 48">
+                            <path fill="#1565C0" d="M45,35c0,2.209-1.791,4-4,4H7c-2.209,0-4-1.791-4-4V13c0-2.209,1.791-4,4-4h34c2.209,0,4,1.791,4,4V35z"></path>
+                            <path fill="#FFF" d="M15.186 19l-2.626 7.832c0 0-.667-3.313-.733-3.729-1.495-3.411-3.701-3.221-3.701-3.221L10.726 30v-.002h3.161L18.258 19H15.186zM17.689 30L20.56 30 22.296 19 19.389 19zM38.008 19h-3.021l-4.71 11h2.852l.588-1.571h3.596L37.619 30h2.613L38.008 19zM34.513 26.328l1.563-4.157.818 4.157H34.513zM26.369 22.206c0-.606.498-1.057 1.926-1.057.928 0 1.991.674 1.991.674l.466-2.309c0 0-1.358-.515-2.691-.515-3.019 0-4.576 1.444-4.576 3.272 0 3.306 3.979 2.853 3.979 4.551 0 .291-.231.964-1.888.964-1.662 0-2.759-.609-2.759-.609l-.495 2.216c0 0 1.063.606 3.117.606 2.059 0 4.915-1.54 4.915-3.752C30.354 23.586 26.369 23.394 26.369 22.206z"></path>
+                            <path fill="#FFC107" d="M12.212,24.945l-0.966-4.748c0,0-0.437-1.029-1.573-1.029c-1.136,0-4.44,0-4.44,0S10.894,20.84,12.212,24.945z"></path>
+                        </svg>
+                        <img src="https://banner2.cleanpng.com/lnd/20241123/ry/85dda930e3465f586e2b20700028d0.webp" alt="MasterCard" width="50" height="50" class="ms-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="50" viewBox="0 0 48 48">
+                            <path fill="#fff" d="M8.653 17.61c-.559.684-1.453 1.224-2.348 1.146-.111-.924.327-1.908.84-2.514C7.703 15.539 8.681 15.038 9.473 15 9.566 15.963 9.203 16.907 8.653 17.61M9.369 19.235c-1.304 0-2.237.706-2.846.706-.619 0-1.542-.697-2.609-.697-1.304 0-2.581.812-3.255 1.996-1.384 2.367-.36 5.872.978 7.799C2.293 29.993 3.084 31 4.151 31c.978-.037 1.309-.588 2.49-.588C7.831 30.412 8.183 31 9.25 31s1.714-.97 2.369-1.925c.748-1.082 1.052-2.138 1.07-2.193-.018-.018-2.066-.798-2.085-3.147-.018-1.963 1.615-2.9 1.689-2.955-.923-1.357-2.45-1.546-2.805-1.546H9.369zM22.688 17H17.25v13.999h2.265v-4.666h3.099c2.844 0 4.887-1.937 4.887-4.666S25.495 17 22.688 17zM22.137 24.466h-2.622v-5.6h2.622c1.952 0 3.099 1.031 3.099 2.8S24.098 24.466 22.137 24.466zM32.752 20.5c-2.39 0-4.156 1.324-4.222 3.144h2.027c.167-.865.995-1.432 2.13-1.432 1.376 0 2.154.621 2.154 1.766l.001.79-2.814.147C29.414 25.068 28 26.105 28 27.907c0 1.82 1.46 3.028 3.552 3.028 1.413 0 2.725-.693 3.319-1.793h.046v1.685H37v-6.992C37.001 21.806 35.327 20.5 32.752 20.5zM34.834 27.014c0 1.316-1.153 2.253-2.678 2.253-1.199 0-1.962-.559-1.962-1.414 0-.883.734-1.396 2.139-1.478l2.508-.184L34.834 27.014zM45.691 20.5l-2.675 8.588H42.97L40.294 20.5H37.92l3.848 10.584-.206.644c-.348 1.091-.91 1.511-1.914 1.511-.172 0-.497-.017-.647-.036v1.745C39.152 34.982 39.68 35 39.844 35c2.215 0 3.256-.839 4.167-3.385L48 20.5H45.691z"></path>
+                        </svg>
+                </div>
+            </div>
+            <hr class="border-secondary">
+            <div class="text-center text-white-50">
+                <small>&copy; 2025 Shopjoy. All rights reserved.</small>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

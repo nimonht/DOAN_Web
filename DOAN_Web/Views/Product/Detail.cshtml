@@ -1,0 +1,277 @@
+﻿@model Product
+@{
+    ViewData["Title"] = Model.Title;
+    var relatedProducts = ViewBag.RelatedProducts as List<Product>;
+}
+
+<div class="product-detail-page">
+    <nav aria-label="breadcrumb" class="container mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            @if (Model.ProductCategories.Any())
+            {
+                var firstCategory = Model.ProductCategories.First().Category;
+                <li class="breadcrumb-item"><a href="/danh-muc/@firstCategory.Slug">@firstCategory.Name</a></li>
+            }
+            <li class="breadcrumb-item active">@Model.Title</li>
+        </ol>
+    </nav>
+    
+    <div class="row g-0">
+        <!-- Full-Width Image Carousel -->
+        <div class="col-lg-8">
+            <div id="productCarousel" class="carousel slide product-detail-carousel" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @if (Model.ProductImages != null && Model.ProductImages.Any())
+                    {
+                        @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
+                        {
+                            <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="@i" 
+                                    class="@(i == 0 ? "active" : "")" aria-label="Slide @(i + 1)"></button>
+                        }
+                    }
+                    else
+                    {
+                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="0" 
+                                class="active" aria-label="Slide 1"></button>
+                    }
+                </div>
+                <div class="carousel-inner">
+                    @if (Model.ProductImages != null && Model.ProductImages.Any())
+                    {
+                        @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
+                        {
+                            var image = Model.ProductImages.ElementAt(i);
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@image.ImageUrl" class="d-block w-100" alt="@Model.Title - Image @(i + 1)">
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="carousel-item active">
+                            <img src="@Model.CoverImageUrl" class="d-block w-100" alt="@Model.Title">
+                        </div>
+                    }
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar - Product Metadata -->
+        <div class="col-lg-4">
+            <div class="product-detail-sidebar">
+                <h1 class="h3 mb-4">@Model.Title</h1>
+                
+                <!-- Price -->
+                <div class="mb-4">
+                    <div class="h2 text-danger mb-0">@Model.Price.ToString("N0") ₫</div>
+                </div>
+                
+                <!-- Stock Status -->
+                <div class="mb-4">
+                    @if (Model.StockQty > 0)
+                    {
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Còn hàng (@Model.StockQty)
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-x-circle"></i> Hết hàng
+                        </span>
+                    }
+                </div>
+                
+                <!-- Product Metadata -->
+                <div class="product-metadata mb-4">
+                    <div class="product-meta-item">
+                        <small class="text-muted">Tác giả</small>
+                        <div class="fw-semibold">@Model.Author.Name</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <small class="text-muted">Nhà xuất bản</small>
+                        <div class="fw-semibold">@Model.Publisher</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ISBN))
+                    {
+                        <div class="product-meta-item">
+                            <small class="text-muted">ISBN</small>
+                            <div class="fw-semibold">@Model.ISBN</div>
+                        </div>
+                    }
+                    @if (Model.PublicationDate.HasValue)
+                    {
+                        <div class="product-meta-item">
+                            <small class="text-muted">Ngày xuất bản</small>
+                            <div class="fw-semibold">@Model.PublicationDate.Value.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    }
+                    @if (Model.ProductCategories.Any())
+                    {
+                        <div class="product-meta-item">
+                            <small class="text-muted">Danh mục</small>
+                            <div>
+                                @foreach (var pc in Model.ProductCategories)
+                                {
+                                    <a href="/danh-muc/@pc.Category.Slug" class="badge bg-light text-primary text-decoration-none me-1">
+                                        @pc.Category.Name
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                
+                <!-- Quantity and Add to Cart -->
+                @if (Model.StockQty > 0)
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số lượng</label>
+                        <div class="input-group" style="max-width: 150px;">
+                            <button class="btn btn-outline-secondary" type="button" id="decrease-qty">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="@Model.StockQty">
+                            <button class="btn btn-outline-secondary" type="button" id="increase-qty">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-lg w-100 mb-3" id="add-to-cart" data-product-id="@Model.ProductId">
+                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
+                    </button>
+                    
+                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-outline-primary w-100">
+                        Mua ngay
+                    </a>
+                }
+                
+                <!-- Description -->
+                <hr class="my-4">
+                <div>
+                    <h6 class="fw-semibold mb-3">Mô tả sản phẩm</h6>
+                    <p class="text-muted small">@Model.Description</p>
+                </div>
+                
+                <!-- Reviews Summary -->
+                @if (Model.Reviews.Any())
+                {
+                    <hr class="my-4">
+                    <div>
+                        <h6 class="fw-semibold mb-3">Đánh giá</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="h4 mb-0 me-2">@Model.Reviews.Average(r => r.Rating).ToString("F1")</div>
+                            <div class="text-warning">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                    @if (i < Math.Round(Model.Reviews.Average(r => r.Rating)))
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <small class="text-muted">(@Model.Reviews.Count đánh giá)</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products Section -->
+    @if (relatedProducts != null && relatedProducts.Any())
+    {
+        <div class="related-products-section">
+            <div class="container py-4">
+                <h3 class="mb-4">Sản phẩm liên quan</h3>
+                <div class="row g-4">
+                    @foreach (var product in relatedProducts)
+                    {
+                        <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                            <a href="/sach/@product.Slug" class="text-decoration-none">
+                                <div class="card product-card h-100 shadow-sm">
+                                    <img src="@product.CoverImageUrl" class="card-img-top" alt="@product.Title" style="height: 200px; object-fit: cover;">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-dark" style="font-size: 0.85rem; min-height: 2.5rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                            @product.Title
+                                        </h6>
+                                        <p class="text-muted small mb-1">@product.Author.Name</p>
+                                        <p class="text-danger fw-bold mb-0">@product.Price.ToString("N0") ₫</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-play carousel
+            var carousel = new bootstrap.Carousel(document.getElementById('productCarousel'), {
+                interval: 3000,
+                ride: 'carousel'
+            });
+            
+            // Quantity controls
+            $('#increase-qty').click(function() {
+                var $input = $('#quantity');
+                var val = parseInt($input.val());
+                if (val < @Model.StockQty) {
+                    $input.val(val + 1);
+                }
+            });
+            
+            $('#decrease-qty').click(function() {
+                var $input = $('#quantity');
+                var val = parseInt($input.val());
+                if (val > 1) {
+                    $input.val(val - 1);
+                }
+            });
+            
+            // Add to cart
+            $('#add-to-cart').click(function() {
+                var quantity = parseInt($('#quantity').val());
+                $.ajax({
+                    url: '/cart/them',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        productId: @Model.ProductId,
+                        quantity: quantity
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Đã thêm sản phẩm vào giỏ hàng', 'success');
+                            updateCartCount();
+                        } else {
+                            showToast(response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        window.location.href = '/Account/DangNhap';
+                    }
+                });
+            });
+        });
+    </script>
+}
