@@ -190,7 +190,7 @@ function updateCartCount() {
 
 function showToast(message, type = 'success') {
     var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-    var toast = $('<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">' +
+    var toast = $('<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">' +
         '<div class="toast show ' + bgClass + ' text-white" role="alert">' +
         '<div class="toast-body">' + message + '</div></div></div>');
     

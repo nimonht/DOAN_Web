@@ -25,8 +25,8 @@
                     <tbody>
                         @foreach (var customer in Model)
                         {
-                            var orderCount = ViewBag.CustomerOrders.ContainsKey(customer.Id) ? ViewBag.CustomerOrders[customer.Id].Count : 0;
-                            var totalSpent = ViewBag.CustomerOrders.ContainsKey(customer.Id) ? ViewBag.CustomerOrders[customer.Id].Sum : 0;
+                            var orderCount = (ViewBag.CustomerOrders != null && ViewBag.CustomerOrders.ContainsKey(customer.Id)) ? ViewBag.CustomerOrders[customer.Id].Count : 0;
+                            var totalSpent = (ViewBag.CustomerOrders != null && ViewBag.CustomerOrders.ContainsKey(customer.Id)) ? ViewBag.CustomerOrders[customer.Id].Sum : 0;
                             
                             <tr>
                                 <td>@customer.FullName</td>

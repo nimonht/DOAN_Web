@@ -33,8 +33,7 @@
                     <hr>
                     
                     <h6>Tải lên ảnh chuyển khoản:</h6>
-                    <form asp-action="UploadPaymentProof" method="post" enctype="multipart/form-data">
-                        <input type="hidden" name="id" value="@Model.OrderId" />
+                    <form asp-action="UploadPaymentProof" asp-route-id="@Model.OrderId" method="post" enctype="multipart/form-data">
                         
                         <div class="mb-3">
                             <input type="file" name="paymentImage" class="form-control" accept="image/*" required>

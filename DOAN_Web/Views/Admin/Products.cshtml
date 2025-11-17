@@ -4,6 +4,10 @@
     Layout = "_AdminLayout";
 }
 
+<form id="deleteForm" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Quản lý sản phẩm</h2>
@@ -92,11 +96,14 @@
     <script>
         function deleteProduct(id) {
             if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+                var form = $('#deleteForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                
                 $.ajax({
                     url: '/admin/san-pham/xoa/' + id,
                     type: 'POST',
                     headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        'RequestVerificationToken': token
                     },
                     success: function(response) {
                         location.reload();

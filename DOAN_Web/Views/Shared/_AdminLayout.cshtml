@@ -31,7 +31,7 @@
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                <i class="bi bi-person-circle"></i> @(User.Identity?.Name ?? "User")
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" asp-controller="Account" asp-action="TaiKhoan">Tài khoản</a></li>
@@ -88,10 +88,6 @@
                 <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Authors" ? "active" : "")" 
                    asp-controller="Admin" asp-action="Authors">
                     <i class="bi bi-person-badge"></i> Tác giả
-                </a>
-                <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")" 
-                   asp-controller="Admin" asp-action="Settings">
-                    <i class="bi bi-gear"></i> Cài đặt
                 </a>
             </nav>
         </div>

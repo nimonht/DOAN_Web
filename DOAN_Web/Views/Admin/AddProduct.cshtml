@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "Thêm sản phẩm mới";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Thêm sản phẩm mới</h2>
+        <a asp-action="Products" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="CreateProduct" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu đề sách <span class="text-danger">*</span></label>
+                            <input type="text" name="Title" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tác giả <span class="text-danger">*</span></label>
+                            <select name="AuthorId" class="form-select" required>
+                                <option value="">-- Chọn tác giả --</option>
+                                @foreach (var author in ViewBag.Authors as List<Author>)
+                                {
+                                    <option value="@author.AuthorId">@author.Name</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">ISBN</label>
+                            <input type="text" name="ISBN" class="form-control">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                    <input type="number" name="Price" class="form-control" min="0" step="1000" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
+                                    <input type="number" name="StockQty" class="form-control" min="0" value="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var category in ViewBag.Categories as List<Category>)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="CategoryIds" 
+                                               value="@category.CategoryId" id="cat_@category.CategoryId">
+                                        <label class="form-check-label" for="cat_@category.CategoryId">
+                                            @category.Name
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="Status" class="form-select">
+                                <option value="Active" selected>Hoạt động</option>
+                                <option value="Discontinued">Ngừng bán</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="Description" class="form-control" rows="10"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Ảnh bìa <span class="text-danger">*</span></label>
+                            <input type="file" name="CoverImage" class="form-control" accept="image/*" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nhà xuất bản</label>
+                            <input type="text" name="Publisher" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-action="Products" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm sản phẩm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

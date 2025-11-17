@@ -27,6 +27,24 @@ namespace DOAN_Web.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure decimal precision for all decimal properties
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.Property(o => o.Subtotal).HasColumnType("decimal(18,2)");
+                entity.Property(o => o.ShippingFee).HasColumnType("decimal(18,2)");
+                entity.Property(o => o.Total).HasColumnType("decimal(18,2)");
+            });
+
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.Property(oi => oi.UnitPrice).HasColumnType("decimal(18,2)");
+            });
+
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.Property(p => p.Price).HasColumnType("decimal(18,2)");
+            });
+
             // ProductCategory already has ProductCategoryId as primary key in the model
             // No need for composite key configuration
 

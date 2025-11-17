@@ -249,6 +249,68 @@ namespace DOAN_Web.Controllers
             return View();
         }
 
+        [HttpPost("/admin/san-pham/them")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateProduct(string title, int authorId, string? isbn, 
+            decimal price, int stockQty, List<int>? categoryIds, string status, string? description, 
+            IFormFile? coverImage, string? publisher)
+        {
+            var product = new Product
+            {
+                Title = title,
+                AuthorId = authorId,
+                ISBN = isbn ?? string.Empty,
+                Price = price,
+                StockQty = stockQty,
+                Status = status,
+                Description = description ?? string.Empty,
+                Publisher = publisher ?? string.Empty,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+
+            // Handle cover image upload
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "products");
+                Directory.CreateDirectory(uploadsFolder);
+                
+                var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(coverImage.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await coverImage.CopyToAsync(fileStream);
+                }
+                
+                product.CoverImageUrl = "/images/products/" + uniqueFileName;
+            }
+            else
+            {
+                product.CoverImageUrl = "/images/products/default.jpg";
+            }
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            // Add categories
+            if (categoryIds != null && categoryIds.Any())
+            {
+                foreach (var categoryId in categoryIds)
+                {
+                    _context.ProductCategories.Add(new ProductCategory
+                    {
+                        ProductId = product.ProductId,
+                        CategoryId = categoryId
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["Success"] = "Đã thêm sản phẩm thành công";
+            return RedirectToAction("Products");
+        }
+
         [HttpGet("/admin/san-pham/sua/{id}")]
         public async Task<IActionResult> EditProduct(int id)
         {
@@ -266,6 +328,68 @@ namespace DOAN_Web.Controllers
             ViewBag.SelectedCategories = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
 
             return View(product);
+        }
+
+        [HttpPost("/admin/san-pham/cap-nhat")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProduct(int productId, string title, int authorId, string? isbn, 
+            decimal price, int stockQty, List<int>? categoryIds, string status, string? description, 
+            IFormFile? coverImage, string? publisher)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductCategories)
+                .FirstOrDefaultAsync(p => p.ProductId == productId);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            product.Title = title;
+            product.AuthorId = authorId;
+            product.ISBN = isbn ?? string.Empty;
+            product.Price = price;
+            product.StockQty = stockQty;
+            product.Status = status;
+            product.Description = description ?? string.Empty;
+            product.Publisher = publisher ?? string.Empty;
+            product.UpdatedAt = DateTime.Now;
+
+            // Handle cover image upload
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "products");
+                Directory.CreateDirectory(uploadsFolder);
+                
+                var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(coverImage.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await coverImage.CopyToAsync(fileStream);
+                }
+                
+                product.CoverImageUrl = "/images/products/" + uniqueFileName;
+            }
+
+            // Update categories
+            _context.ProductCategories.RemoveRange(product.ProductCategories);
+            if (categoryIds != null && categoryIds.Any())
+            {
+                foreach (var categoryId in categoryIds)
+                {
+                    _context.ProductCategories.Add(new ProductCategory
+                    {
+                        ProductId = productId,
+                        CategoryId = categoryId
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã cập nhật sản phẩm thành công";
+            return RedirectToAction("Products");
         }
 
         [HttpPost("/admin/san-pham/xoa/{id}")]
@@ -399,14 +523,18 @@ namespace DOAN_Web.Controllers
                 .ToListAsync();
 
             // Get order statistics for each customer
-            var customerOrders = new Dictionary<string, (int Count, decimal Sum)>();
+            var customerOrders = new Dictionary<string, DOAN_Web.ViewModels.CustomerOrderStats>();
             foreach (var customer in customers)
             {
                 var orders = await _context.Orders
                     .Where(o => o.UserId == customer.Id && o.Status == "HoanThanh")
                     .ToListAsync();
                 
-                customerOrders[customer.Id] = (orders.Count, orders.Sum(o => o.Total));
+                customerOrders[customer.Id] = new DOAN_Web.ViewModels.CustomerOrderStats
+                {
+                    Count = orders.Count,
+                    Sum = orders.Sum(o => o.Total)
+                };
             }
             
             ViewBag.CustomerOrders = customerOrders;
@@ -447,11 +575,66 @@ namespace DOAN_Web.Controllers
             return View(authors);
         }
 
-        // Settings
-        [HttpGet("/admin/cai-dat")]
-        public IActionResult Settings()
+        [HttpPost("/admin/tac-gia/them")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAuthor(string name, string? bio)
         {
-            return View();
+            var author = new Author
+            {
+                Name = name,
+                Bio = bio ?? string.Empty
+            };
+
+            _context.Authors.Add(author);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã thêm tác giả thành công";
+            return RedirectToAction("Authors");
+        }
+
+        [HttpPost("/admin/tac-gia/sua")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAuthor(int authorId, string name, string? bio)
+        {
+            var author = await _context.Authors.FindAsync(authorId);
+            if (author == null)
+            {
+                return NotFound();
+            }
+
+            author.Name = name;
+            author.Bio = bio ?? string.Empty;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã cập nhật tác giả thành công";
+            return RedirectToAction("Authors");
+        }
+
+        [HttpPost("/admin/tac-gia/xoa/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAuthor(int id)
+        {
+            var author = await _context.Authors
+                .Include(a => a.Products)
+                .FirstOrDefaultAsync(a => a.AuthorId == id);
+                
+            if (author == null)
+            {
+                return NotFound();
+            }
+
+            if (author.Products.Any())
+            {
+                TempData["Error"] = "Không thể xóa tác giả đang có sản phẩm";
+                return RedirectToAction("Authors");
+            }
+
+            _context.Authors.Remove(author);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã xóa tác giả thành công";
+            return RedirectToAction("Authors");
         }
     }
 }

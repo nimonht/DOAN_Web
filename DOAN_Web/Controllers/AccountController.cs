@@ -12,15 +12,18 @@ namespace DOAN_Web.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _context = context;
         }
 
@@ -81,7 +84,16 @@ namespace DOAN_Web.Controllers
 
                 if (result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(user, "User");
+                    // Ensure the "Customer" role exists before adding the user to it.
+                    // The role seeding should create roles on application startup, but
+                    // as a fallback we create it here if it doesn't yet exist.
+                    var customerRole = "Customer";
+                    if (!await _roleManager.RoleExistsAsync(customerRole))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(customerRole));
+                    }
+
+                    await _userManager.AddToRoleAsync(user, customerRole);
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Home");
                 }

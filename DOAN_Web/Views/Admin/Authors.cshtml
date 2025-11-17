@@ -1,0 +1,160 @@
+@model List<Author>
+@{
+    ViewData["Title"] = "Quản lý tác giả";
+    Layout = "_AdminLayout";
+}
+
+<form id="deleteForm" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý tác giả</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAuthorModal">
+            <i class="bi bi-plus-circle"></i> Thêm tác giả mới
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tên tác giả</th>
+                            <th>Tiểu sử</th>
+                            <th>Số sản phẩm</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var author in Model)
+                        {
+                            <tr>
+                                <td><strong>@author.Name</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(author.Bio))
+                                    {
+                                        <span>@(author.Bio.Length > 100 ? author.Bio.Substring(0, 100) + "..." : author.Bio)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa có tiểu sử</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@author.Products.Count sản phẩm</span>
+                                </td>
+                                <td>@author.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="editAuthor(@author.AuthorId, '@author.Name', '@(author.Bio?.Replace("'", "\\'" ).Replace("\n", "\\n") ?? "")')">
+                                            <i class="bi bi-pencil"></i> Sửa
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="deleteAuthor(@author.AuthorId)"
+                                                @(author.Products.Any() ? "disabled" : "")>
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Author Modal -->
+<div class="modal fade" id="addAuthorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm tác giả mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AddAuthor" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên tác giả <span class="text-danger">*</span></label>
+                        <input type="text" name="Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tiểu sử</label>
+                        <textarea name="Bio" class="form-control" rows="5"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Thêm tác giả</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Author Modal -->
+<div class="modal fade" id="editAuthorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa tác giả</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="EditAuthor" method="post">
+                <input type="hidden" id="edit_author_id" name="AuthorId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên tác giả <span class="text-danger">*</span></label>
+                        <input type="text" id="edit_author_name" name="Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tiểu sử</label>
+                        <textarea id="edit_author_bio" name="Bio" class="form-control" rows="5"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editAuthor(id, name, bio) {
+            $('#edit_author_id').val(id);
+            $('#edit_author_name').val(name);
+            $('#edit_author_bio').val(bio);
+            $('#editAuthorModal').modal('show');
+        }
+        
+        function deleteAuthor(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa tác giả này?')) {
+                var form = $('#deleteForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                
+                $.ajax({
+                    url: '/admin/tac-gia/xoa/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('Có lỗi xảy ra khi xóa tác giả');
+                    }
+                });
+            }
+        }
+    </script>
+}
