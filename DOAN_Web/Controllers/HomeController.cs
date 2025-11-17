@@ -27,19 +27,16 @@ namespace DOAN_Web.Controllers
                 .Take(12)
                 .ToListAsync();
 
-            // Get categories
+            // Get categories 
             var categories = await _context.Categories
+                .Include(c => c.ProductCategories)
+                    .ThenInclude(pc => pc.Product)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
             ViewBag.Categories = categories;
             
             return View(featuredProducts);
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

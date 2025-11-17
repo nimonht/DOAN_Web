@@ -28,6 +28,7 @@ namespace DOAN_Web.Controllers
                     c.Name,
                     c.Slug,
                     c.Description,
+                    c.BackgroundImageUrl,
                     ProductCount = c.ProductCategories.Count(pc => pc.Product != null && pc.Product.Status == "Active")
                 })
                 .ToListAsync();

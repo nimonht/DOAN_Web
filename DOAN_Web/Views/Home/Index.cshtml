@@ -22,7 +22,7 @@
     <div class="row g-4 product-grid">
         @foreach (var product in Model)
         {
-            <div class="col-lg-3 col-md-4 col-sm-6 product-item">
+            <div class="col-lg-3 col-md-4 col-6 product-item">
                 <div class="card h-100 shadow-sm border-0 product-card">
                     <a href="/sach/@product.Slug">
                         <img src="@product.CoverImageUrl" class="card-img-top" alt="@product.Title" style="height: 300px; object-fit: cover;">
@@ -70,10 +70,19 @@
                     if (count >= 8) break; // Show only 8 categories on homepage
                     <div class="col-lg-3 col-md-4 col-6">
                         <a href="/danh-muc/@category.Slug" class="text-decoration-none">
-                            <div class="card text-center shadow-sm border-0 category-card">
-                                <div class="card-body">
-                                    <i class="bi bi-book fs-1 text-primary"></i>
-                                    <h6 class="mt-2 mb-0 text-dark">@category.Name</h6>
+                            <div class="category-card shadow-sm" 
+                                 style="background-image: url('@(!string.IsNullOrEmpty(category.BackgroundImageUrl) ? category.BackgroundImageUrl : "/images/default-category.jpg")')">
+                                <div class="category-card-content">
+                                    <h6 class="card-title fw-bold mb-0">@category.Name</h6>
+                                    @{
+                                        // Count only products that are active (e.g., Status == "Active")
+                                        var productCount = 0;
+                                        if (category.ProductCategories != null)
+                                        {
+                                            productCount = category.ProductCategories.Count(pc => pc.Product != null && pc.Product.Status == "Active");
+                                        }
+                                    }
+                                    <small class="text-muted">@productCount sản phẩm</small>
                                 </div>
                             </div>
                         </a>

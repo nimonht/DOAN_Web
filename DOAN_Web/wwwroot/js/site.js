@@ -19,6 +19,8 @@ function initStickyNavbar() {
     const delta = 5;
     let didScroll = false;
 
+    if (!navbar) return;
+
     $(window).scroll(function() {
         didScroll = true;
     });
@@ -59,8 +61,13 @@ function initCategoryDropdown() {
     const trigger = $('#categoryDropdownTrigger');
     const closeBtn = $('#closeCategoryDropdown');
     
+    // Only initialize if elements exist
+    if (!dropdown.length || !trigger.length) return;
+    
     // Create overlay
-    $('body').append('<div class="category-dropdown-overlay" id="categoryOverlay"></div>');
+    if (!document.getElementById('categoryOverlay')) {
+        $('body').append('<div class="category-dropdown-overlay" id="categoryOverlay"></div>');
+    }
     const overlay = $('#categoryOverlay');
     
     // Toggle dropdown
@@ -141,13 +148,15 @@ function renderCategories(categories) {
     
     categories.forEach(function(category) {
         const productCount = category.productCount || 0;
+        const bgImage = category.backgroundImageUrl || '/images/default-category.jpg';
         const card = `
             <div class="col-lg-2 col-md-3 col-sm-4 col-6">
                 <a href="/danh-muc/${category.slug}" class="text-decoration-none">
-                    <div class="category-mini-card">
-                        <i class="bi bi-book"></i>
-                        <h6>${category.name}</h6>
-                        <span class="badge bg-primary">${productCount}</span>
+                    <div class="category-mini-card" style="background-image: url('${bgImage}');">
+                        <div class="category-card-content">
+                            <h6 class="card-title fw-bold mb-0">${category.name}</h6>
+                            <small class="text-muted">${productCount} sản phẩm</small>
+                        </div>
                     </div>
                 </a>
             </div>
@@ -160,9 +169,11 @@ function renderCategories(categories) {
         <div class="col-lg-2 col-md-3 col-sm-4 col-6">
             <a href="/danh-muc" class="text-decoration-none">
                 <div class="category-mini-card">
-                    <i class="bi bi-grid-3x3-gap"></i>
-                    <h6>Xem tất cả</h6>
-                    <span class="badge bg-secondary">${categories.length}</span>
+                    <div class="category-card-content">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        <h6 class="card-title fw-bold mb-0">Xem tất cả</h6>
+                        <small class="text-muted">${categories.length} danh mục</small>
+                    </div>
                 </div>
             </a>
         </div>
@@ -196,3 +207,59 @@ function showToast(message, type = 'success') {
 function getAntiForgeryToken() {
     return $('input[name="__RequestVerificationToken"]').val();
 }
+
+// Product Sticky Panel Functions
+window.initProductStickyPanel = function() {
+    const panel = document.getElementById('productStickyPanel');
+    if (!panel) return;
+    
+    // Show panel after page loads with smooth animation
+    setTimeout(() => {
+        panel.classList.add('show');
+    }, 50);
+    
+    // Handle scroll behavior for footer collision
+    let ticking = false;
+    
+    function updatePanelPosition() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const navbar = document.getElementById('mainHeader');
+        const footer = document.querySelector('footer');
+        const navbarHeight = navbar ? navbar.offsetHeight : 72;
+        
+        if (footer && panel.classList.contains('show')) {
+            const footerRect = footer.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            
+            // Calculate if footer is approaching
+            if (footerRect.top < windowHeight && footerRect.top > 0) {
+                // Footer is visible, position panel above it
+                const distanceFromBottom = windowHeight - footerRect.top + 20; // 20px margin
+                panel.style.bottom = `${distanceFromBottom}px`;
+                panel.style.top = 'auto';
+                panel.classList.add('footer-collision');
+            } else {
+                // Normal sticky behavior
+                panel.style.top = `${navbarHeight}px`;
+                panel.style.bottom = 'auto';
+                panel.classList.remove('footer-collision');
+            }
+        }
+        
+        ticking = false;
+    }
+    
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updatePanelPosition);
+            ticking = true;
+        }
+    }
+    
+    // Throttled scroll listener
+    window.addEventListener('scroll', requestTick);
+    window.addEventListener('resize', requestTick);
+    
+    // Initial position check
+    updatePanelPosition();
+};

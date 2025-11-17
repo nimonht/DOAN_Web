@@ -17,28 +17,68 @@
         </ol>
     </nav>
     
-    <div class="row g-0">
-        <!-- Full-Width Image Carousel -->
-        <div class="col-lg-8">
-            <div id="productCarousel" class="carousel slide product-detail-carousel" data-bs-ride="carousel">
-                <div class="carousel-indicators">
-                    @if (Model.ProductImages != null && Model.ProductImages.Any())
+    <!-- Image Carousel -->
+    <div class="product-carousel-wrapper d-none d-md-block">
+        <div id="productCarousel" class="carousel slide product-detail-carousel" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
                     {
+                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="@i" 
+                                class="@(i == 0 ? "active" : "")" aria-label="Slide @(i + 1)"></button>
+                    }
+                }
+                else
+                {
+                    <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="0" 
+                            class="active" aria-label="Slide 1"></button>
+                }
+            </div>
+            <div class="carousel-inner">
+                @if (Model.ProductImages != null && Model.ProductImages.Any())
+                {
+                    @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
+                    {
+                        var image = Model.ProductImages.ElementAt(i);
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@image.ImageUrl" class="d-block w-100" alt="@Model.Title - Image @(i + 1)">
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="carousel-item active">
+                        <img src="@Model.CoverImageUrl" class="d-block w-100" alt="@Model.Title">
+                    </div>
+                }
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Layout - Column Flow -->
+    <div class="container d-md-none mobile-product-layout">
+        <!-- Mobile Image Section -->
+        <div class="mobile-product-image">
+            @if (Model.ProductImages != null && Model.ProductImages.Any())
+            {
+                <div id="mobileProductCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
                         @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
                         {
-                            <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="@i" 
+                            <button type="button" data-bs-target="#mobileProductCarousel" data-bs-slide-to="@i" 
                                     class="@(i == 0 ? "active" : "")" aria-label="Slide @(i + 1)"></button>
                         }
-                    }
-                    else
-                    {
-                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="0" 
-                                class="active" aria-label="Slide 1"></button>
-                    }
-                </div>
-                <div class="carousel-inner">
-                    @if (Model.ProductImages != null && Model.ProductImages.Any())
-                    {
+                    </div>
+                    <div class="carousel-inner">
                         @for (int i = 0; i < Math.Min(Model.ProductImages.Count, 6); i++)
                         {
                             var image = Model.ProductImages.ElementAt(i);
@@ -46,83 +86,218 @@
                                 <img src="@image.ImageUrl" class="d-block w-100" alt="@Model.Title - Image @(i + 1)">
                             </div>
                         }
-                    }
-                    else
-                    {
-                        <div class="carousel-item active">
-                            <img src="@Model.CoverImageUrl" class="d-block w-100" alt="@Model.Title">
-                        </div>
-                    }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#mobileProductCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#mobileProductCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            </div>
+            }
+            else
+            {
+                <img src="@Model.CoverImageUrl" class="w-100" alt="@Model.Title">
+            }
         </div>
-        
-        <!-- Right Sidebar - Product Metadata -->
-        <div class="col-lg-4">
-            <div class="product-detail-sidebar">
-                <h1 class="h3 mb-4">@Model.Title</h1>
+
+        <!-- Mobile Product Info Panel -->
+        <div class="mobile-product-info">
+            <h1 class="product-title">@Model.Title</h1>
+            <p class="product-author">@Model.Author.Name</p>
+            
+            <div class="product-price">
+                <span class="price-amount">@Model.Price.ToString("N0") ₫</span>
+            </div>
+            
+            <!-- Stock Status -->
+            <div class="stock-status">
+                @if (Model.StockQty > 0)
+                {
+                    <span class="badge stock-available">
+                        <i class="bi bi-check-circle"></i> Còn hàng (@Model.StockQty)
+                    </span>
+                }
+                else
+                {
+                    <span class="badge stock-unavailable">
+                        <i class="bi bi-x-circle"></i> Hết hàng
+                    </span>
+                }
+            </div>
+            
+            <!-- Product Actions -->
+            @if (Model.StockQty > 0)
+            {
+                <div class="product-actions">
+                    <div class="quantity-selector">
+                        <label class="form-label">Số lượng</label>
+                        <div class="qty-controls">
+                            <button class="btn-qty-decrease" type="button" id="mobile-decrease-qty">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="qty-input" id="mobile-quantity" value="1" min="1" max="@Model.StockQty">
+                            <button class="btn-qty-increase" type="button" id="mobile-increase-qty">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-add-to-cart" id="mobile-add-to-cart" data-product-id="@Model.ProductId">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>Thêm vào giỏ</span>
+                    </button>
+                </div>
+            }
+            
+            <!-- Product Metadata -->
+            <div class="product-metadata">
+                <div class="metadata-item">
+                    <span class="meta-label">Nhà xuất bản</span>
+                    <span class="meta-value">@Model.Publisher</span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.ISBN))
+                {
+                    <div class="metadata-item">
+                        <span class="meta-label">ISBN</span>
+                        <span class="meta-value">@Model.ISBN</span>
+                    </div>
+                }
+                @if (Model.PublicationDate.HasValue)
+                {
+                    <div class="metadata-item">
+                        <span class="meta-label">Ngày xuất bản</span>
+                        <span class="meta-value">@Model.PublicationDate.Value.ToString("dd/MM/yyyy")</span>
+                    </div>
+                }
+                @if (Model.ProductCategories.Any())
+                {
+                    <div class="metadata-item">
+                        <span class="meta-label">Danh mục</span>
+                        <div class="meta-value categories">
+                            @foreach (var pc in Model.ProductCategories)
+                            {
+                                <a href="/danh-muc/@pc.Category.Slug" class="category-tag">
+                                    @pc.Category.Name
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Description -->
+            <div class="product-description">
+                <h6 class="section-title">Mô tả sản phẩm</h6>
+                <p class="description-text">@Model.Description</p>
+            </div>
+            
+            <!-- Reviews Summary -->
+            @if (Model.Reviews.Any())
+            {
+                <div class="reviews-summary">
+                    <h6 class="section-title">Đánh giá</h6>
+                    <div class="rating-display">
+                        <span class="rating-score">@Model.Reviews.Average(r => r.Rating).ToString("F1")</span>
+                        <div class="rating-stars">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                @if (i < Math.Round(Model.Reviews.Average(r => r.Rating)))
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                            }
+                        </div>
+                        <span class="review-count">(@Model.Reviews.Count đánh giá)</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Desktop Sticky Product Panel -->
+    <div id="productStickyPanel" class="product-sticky-panel d-none d-md-block">
+        <div class="sticky-panel-content">
+            <div class="product-info">
+                <h2 class="product-title">@Model.Title</h2>
+                <p class="product-author">@Model.Author.Name</p>
                 
-                <!-- Price -->
-                <div class="mb-4">
-                    <div class="h2 text-danger mb-0">@Model.Price.ToString("N0") ₫</div>
+                <div class="product-price">
+                    <span class="price-amount">@Model.Price.ToString("N0") ₫</span>
                 </div>
                 
                 <!-- Stock Status -->
-                <div class="mb-4">
+                <div class="stock-status">
                     @if (Model.StockQty > 0)
                     {
-                        <span class="badge bg-success">
+                        <span class="badge stock-available">
                             <i class="bi bi-check-circle"></i> Còn hàng (@Model.StockQty)
                         </span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary">
+                        <span class="badge stock-unavailable">
                             <i class="bi bi-x-circle"></i> Hết hàng
                         </span>
                     }
                 </div>
                 
-                <!-- Product Metadata -->
-                <div class="product-metadata mb-4">
-                    <div class="product-meta-item">
-                        <small class="text-muted">Tác giả</small>
-                        <div class="fw-semibold">@Model.Author.Name</div>
+                <!-- Product Actions -->
+                @if (Model.StockQty > 0)
+                {
+                    <div class="product-actions">
+                        <div class="quantity-selector">
+                            <label class="form-label">Số lượng</label>
+                            <div class="qty-controls">
+                                <button class="btn-qty-decrease" type="button" id="panel-decrease-qty">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="qty-input" id="panel-quantity" value="1" min="1" max="@Model.StockQty">
+                                <button class="btn-qty-increase" type="button" id="panel-increase-qty">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-add-to-cart" id="panel-add-to-cart" data-product-id="@Model.ProductId">
+                            <i class="bi bi-cart-plus"></i>
+                            <span>Thêm vào giỏ</span>
+                        </button>
                     </div>
-                    <div class="product-meta-item">
-                        <small class="text-muted">Nhà xuất bản</small>
-                        <div class="fw-semibold">@Model.Publisher</div>
+                }
+                
+                <!-- Product Metadata -->
+                <div class="product-metadata">
+                    <div class="metadata-item">
+                        <span class="meta-label">Nhà xuất bản</span>
+                        <span class="meta-value">@Model.Publisher</span>
                     </div>
                     @if (!string.IsNullOrEmpty(Model.ISBN))
                     {
-                        <div class="product-meta-item">
-                            <small class="text-muted">ISBN</small>
-                            <div class="fw-semibold">@Model.ISBN</div>
+                        <div class="metadata-item">
+                            <span class="meta-label">ISBN</span>
+                            <span class="meta-value">@Model.ISBN</span>
                         </div>
                     }
                     @if (Model.PublicationDate.HasValue)
                     {
-                        <div class="product-meta-item">
-                            <small class="text-muted">Ngày xuất bản</small>
-                            <div class="fw-semibold">@Model.PublicationDate.Value.ToString("dd/MM/yyyy")</div>
+                        <div class="metadata-item">
+                            <span class="meta-label">Ngày xuất bản</span>
+                            <span class="meta-value">@Model.PublicationDate.Value.ToString("dd/MM/yyyy")</span>
                         </div>
                     }
                     @if (Model.ProductCategories.Any())
                     {
-                        <div class="product-meta-item">
-                            <small class="text-muted">Danh mục</small>
-                            <div>
+                        <div class="metadata-item">
+                            <span class="meta-label">Danh mục</span>
+                            <div class="meta-value categories">
                                 @foreach (var pc in Model.ProductCategories)
                                 {
-                                    <a href="/danh-muc/@pc.Category.Slug" class="badge bg-light text-primary text-decoration-none me-1">
+                                    <a href="/danh-muc/@pc.Category.Slug" class="category-tag">
                                         @pc.Category.Name
                                     </a>
                                 }
@@ -131,47 +306,20 @@
                     }
                 </div>
                 
-                <!-- Quantity and Add to Cart -->
-                @if (Model.StockQty > 0)
-                {
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Số lượng</label>
-                        <div class="input-group" style="max-width: 150px;">
-                            <button class="btn btn-outline-secondary" type="button" id="decrease-qty">
-                                <i class="bi bi-dash"></i>
-                            </button>
-                            <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="@Model.StockQty">
-                            <button class="btn btn-outline-secondary" type="button" id="increase-qty">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-primary btn-lg w-100 mb-3" id="add-to-cart" data-product-id="@Model.ProductId">
-                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
-                    </button>
-                    
-                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-outline-primary w-100">
-                        Mua ngay
-                    </a>
-                }
-                
                 <!-- Description -->
-                <hr class="my-4">
-                <div>
-                    <h6 class="fw-semibold mb-3">Mô tả sản phẩm</h6>
-                    <p class="text-muted small">@Model.Description</p>
+                <div class="product-description">
+                    <h6 class="section-title">Mô tả sản phẩm</h6>
+                    <p class="description-text">@Model.Description</p>
                 </div>
                 
                 <!-- Reviews Summary -->
                 @if (Model.Reviews.Any())
                 {
-                    <hr class="my-4">
-                    <div>
-                        <h6 class="fw-semibold mb-3">Đánh giá</h6>
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="h4 mb-0 me-2">@Model.Reviews.Average(r => r.Rating).ToString("F1")</div>
-                            <div class="text-warning">
+                    <div class="reviews-summary">
+                        <h6 class="section-title">Đánh giá</h6>
+                        <div class="rating-display">
+                            <span class="rating-score">@Model.Reviews.Average(r => r.Rating).ToString("F1")</span>
+                            <div class="rating-stars">
                                 @for (int i = 0; i < 5; i++)
                                 {
                                     @if (i < Math.Round(Model.Reviews.Average(r => r.Rating)))
@@ -184,14 +332,14 @@
                                     }
                                 }
                             </div>
+                            <span class="review-count">(@Model.Reviews.Count đánh giá)</span>
                         </div>
-                        <small class="text-muted">(@Model.Reviews.Count đánh giá)</small>
                     </div>
                 }
             </div>
         </div>
     </div>
-    
+
     <!-- Related Products Section -->
     @if (relatedProducts != null && relatedProducts.Any())
     {
@@ -225,32 +373,74 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Auto-play carousel
-            var carousel = new bootstrap.Carousel(document.getElementById('productCarousel'), {
-                interval: 3000,
-                ride: 'carousel'
-            });
+            // Desktop carousel
+            if ($('#productCarousel').length) {
+                var carousel = new bootstrap.Carousel(document.getElementById('productCarousel'), {
+                    interval: 3000,
+                    ride: 'carousel'
+                });
+            }
             
-            // Quantity controls
-            $('#increase-qty').click(function() {
-                var $input = $('#quantity');
+            // Mobile carousel
+            if ($('#mobileProductCarousel').length) {
+                var mobileCarousel = new bootstrap.Carousel(document.getElementById('mobileProductCarousel'), {
+                    interval: 3000,
+                    ride: 'carousel'
+                });
+            }
+            
+            // Initialize desktop sticky panel only
+            if (window.innerWidth >= 768) {
+                initProductStickyPanel();
+            }
+            
+            // Desktop panel quantity controls
+            $('#panel-increase-qty').click(function() {
+                var $input = $('#panel-quantity');
                 var val = parseInt($input.val());
                 if (val < @Model.StockQty) {
                     $input.val(val + 1);
                 }
             });
             
-            $('#decrease-qty').click(function() {
-                var $input = $('#quantity');
+            $('#panel-decrease-qty').click(function() {
+                var $input = $('#panel-quantity');
                 var val = parseInt($input.val());
                 if (val > 1) {
                     $input.val(val - 1);
                 }
             });
             
-            // Add to cart
-            $('#add-to-cart').click(function() {
-                var quantity = parseInt($('#quantity').val());
+            // Mobile quantity controls
+            $('#mobile-increase-qty').click(function() {
+                var $input = $('#mobile-quantity');
+                var val = parseInt($input.val());
+                if (val < @Model.StockQty) {
+                    $input.val(val + 1);
+                }
+            });
+            
+            $('#mobile-decrease-qty').click(function() {
+                var $input = $('#mobile-quantity');
+                var val = parseInt($input.val());
+                if (val > 1) {
+                    $input.val(val - 1);
+                }
+            });
+            
+            // Desktop panel add to cart
+            $('#panel-add-to-cart').click(function() {
+                addToCart($('#panel-quantity').val());
+            });
+            
+            // Mobile add to cart
+            $('#mobile-add-to-cart').click(function() {
+                addToCart($('#mobile-quantity').val());
+            });
+            
+            // Shared add to cart function
+            function addToCart(quantity) {
+                quantity = parseInt(quantity);
                 $.ajax({
                     url: '/cart/them',
                     type: 'POST',
@@ -271,7 +461,7 @@
                         window.location.href = '/Account/DangNhap';
                     }
                 });
-            });
+            }
         });
     </script>
 }
