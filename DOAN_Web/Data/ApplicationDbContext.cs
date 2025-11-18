@@ -61,6 +61,10 @@ namespace DOAN_Web.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Review>()
+                .HasIndex(r => new { r.ProductId, r.UserId })
+                .IsUnique();
+
             // Configure OrderItem relationships to prevent cascade delete conflicts
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.Order)

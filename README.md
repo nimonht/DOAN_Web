@@ -177,13 +177,3 @@ DOAN_Web/
 - Wishlist functionality
 - Email notifications
 
-## License
-This is a university project for educational purposes.
-
-## Credits
-- Developed by: [Your Name]
-- University: HUFLIT
-- Year: 2025
-
-## Support
-For issues or questions, please contact: [your-email]

@@ -143,6 +143,12 @@ namespace DOAN_Web.Controllers
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
+            var userReviews = await _context.Reviews
+                .Where(r => r.UserId == user.Id)
+                .ToListAsync();
+
+            ViewBag.UserReviews = userReviews;
+
             return View(orders);
         }
 

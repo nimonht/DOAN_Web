@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Claims;
 using DOAN_Web.Data;
+using DOAN_Web.Models;
+using DOAN_Web.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DOAN_Web.Controllers
 {
@@ -41,9 +45,104 @@ namespace DOAN_Web.Controllers
                 .Take(6)
                 .ToListAsync();
 
+            var orderedReviews = product.Reviews
+                .OrderByDescending(r => r.CreatedAt)
+                .ToList();
+
+            var averageRating = orderedReviews.Any()
+                ? orderedReviews.Average(r => r.Rating)
+                : 0d;
+
             ViewBag.RelatedProducts = relatedProducts;
+            ViewBag.OrderedReviews = orderedReviews;
+            ViewBag.AverageRating = averageRating;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userReview = orderedReviews.FirstOrDefault(r => r.UserId == userId);
+
+                var hasCompletedOrder = await _context.OrderItems
+                    .AnyAsync(oi => oi.Order.UserId == userId &&
+                                    oi.Order.Status == "HoanThanh" &&
+                                    oi.ProductId == product.ProductId);
+
+                ViewBag.HasPurchased = hasCompletedOrder;
+                ViewBag.UserReview = userReview;
+                ViewBag.CanReview = hasCompletedOrder && userReview == null;
+            }
+            else
+            {
+                ViewBag.HasPurchased = false;
+                ViewBag.UserReview = null;
+                ViewBag.CanReview = false;
+            }
 
             return View(product);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(ReviewInputModel input)
+        {
+            var product = await _context.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProductId == input.ProductId);
+
+            if (product == null)
+            {
+                TempData["ReviewError"] = "Không tìm thấy sản phẩm.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var redirectUrl = $"/sach/{product.Slug}#reviews";
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ReviewError"] = "Vui lòng cung cấp thông tin đánh giá hợp lệ.";
+                return Redirect(redirectUrl);
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("DangNhap", "Account", new { returnUrl = $"/sach/{product.Slug}" });
+            }
+
+            var hasCompletedOrder = await _context.OrderItems
+                .AnyAsync(oi => oi.Order.UserId == userId &&
+                                oi.Order.Status == "HoanThanh" &&
+                                oi.ProductId == input.ProductId);
+
+            if (!hasCompletedOrder)
+            {
+                TempData["ReviewError"] = "Bạn chỉ có thể đánh giá sau khi đơn hàng được hoàn thành.";
+                return Redirect(redirectUrl);
+            }
+
+            var existingReview = await _context.Reviews
+                .FirstOrDefaultAsync(r => r.ProductId == input.ProductId && r.UserId == userId);
+
+            if (existingReview != null)
+            {
+                TempData["ReviewError"] = "Bạn đã đánh giá sản phẩm này.";
+                return Redirect(redirectUrl);
+            }
+
+            var review = new Review
+            {
+                ProductId = input.ProductId,
+                UserId = userId,
+                Rating = input.Rating,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            TempData["ReviewSuccess"] = "Cảm ơn bạn đã gửi đánh giá.";
+            return Redirect(redirectUrl);
         }
 
         [HttpGet("/tim-kiem")]

@@ -1,7 +1,18 @@
-﻿@model Product
+﻿@using DOAN_Web.Models
+@using System.Linq
+@model Product
 @{
     ViewData["Title"] = Model.Title;
     var relatedProducts = ViewBag.RelatedProducts as List<Product>;
+    var orderedReviews = ViewBag.OrderedReviews as List<Review> ?? new List<Review>();
+    var averageRating = ViewBag.AverageRating is double avg ? avg : 0d;
+    var roundedAverage = (int)Math.Round(averageRating, MidpointRounding.AwayFromZero);
+    var canReview = ViewBag.CanReview is bool can && can;
+    var hasPurchased = ViewBag.HasPurchased is bool purchased && purchased;
+    var userReview = ViewBag.UserReview as Review;
+    var totalReviews = orderedReviews.Count;
+    var reviewSuccess = TempData["ReviewSuccess"] as string;
+    var reviewError = TempData["ReviewError"] as string;
 }
 
 <div class="product-detail-page">
@@ -193,16 +204,16 @@
             </div>
             
             <!-- Reviews Summary -->
-            @if (Model.Reviews.Any())
+            @if (orderedReviews.Any())
             {
                 <div class="reviews-summary">
                     <h6 class="section-title">Đánh giá</h6>
                     <div class="rating-display">
-                        <span class="rating-score">@Model.Reviews.Average(r => r.Rating).ToString("F1")</span>
+                        <span class="rating-score">@averageRating.ToString("0.0")</span>
                         <div class="rating-stars">
                             @for (int i = 0; i < 5; i++)
                             {
-                                @if (i < Math.Round(Model.Reviews.Average(r => r.Rating)))
+                                @if (i < roundedAverage)
                                 {
                                     <i class="bi bi-star-fill"></i>
                                 }
@@ -212,7 +223,7 @@
                                 }
                             }
                         </div>
-                        <span class="review-count">(@Model.Reviews.Count đánh giá)</span>
+                        <span class="review-count">(@totalReviews đánh giá)</span>
                     </div>
                 </div>
             }
@@ -313,16 +324,16 @@
                 </div>
                 
                 <!-- Reviews Summary -->
-                @if (Model.Reviews.Any())
+                @if (orderedReviews.Any())
                 {
                     <div class="reviews-summary">
                         <h6 class="section-title">Đánh giá</h6>
                         <div class="rating-display">
-                            <span class="rating-score">@Model.Reviews.Average(r => r.Rating).ToString("F1")</span>
+                            <span class="rating-score">@averageRating.ToString("0.0")</span>
                             <div class="rating-stars">
                                 @for (int i = 0; i < 5; i++)
                                 {
-                                    @if (i < Math.Round(Model.Reviews.Average(r => r.Rating)))
+                                    @if (i < roundedAverage)
                                     {
                                         <i class="bi bi-star-fill"></i>
                                     }
@@ -332,10 +343,158 @@
                                     }
                                 }
                             </div>
-                            <span class="review-count">(@Model.Reviews.Count đánh giá)</span>
+                            <span class="review-count">(@totalReviews đánh giá)</span>
                         </div>
                     </div>
                 }
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div id="reviews" class="product-reviews-section">
+        <div class="container py-5">
+            <h3 class="mb-4">Đánh giá sản phẩm</h3>
+
+            @if (!string.IsNullOrEmpty(reviewSuccess))
+            {
+                <div class="alert alert-success" role="alert">@reviewSuccess</div>
+            }
+            else if (!string.IsNullOrEmpty(reviewError))
+            {
+                <div class="alert alert-danger" role="alert">@reviewError</div>
+            }
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="border rounded p-4 h-100">
+                        <h5 class="mb-3">Tổng quan đánh giá</h5>
+                        <div class="d-flex align-items-baseline mb-3">
+                            <span class="display-6 fw-bold me-2">@averageRating.ToString("0.0")</span>
+                            <div>
+                                <div class="text-warning">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        @if (i < roundedAverage)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+                                </div>
+                                <small class="text-muted">@totalReviews đánh giá</small>
+                            </div>
+                        </div>
+                        <div class="rating-breakdown">
+                            @for (int star = 5; star >= 1; star--)
+                            {
+                                var count = orderedReviews.Count(r => r.Rating == star);
+                                var percent = totalReviews == 0 ? 0 : (int)Math.Round((double)count / totalReviews * 100);
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2" style="width: 1.5rem;">@star</span>
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: @percent%;" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="ms-2 text-muted" style="width: 3rem;">@count</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="mb-4">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            if (canReview)
+                            {
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Chia sẻ cảm nhận của bạn</h5>
+                                        <form asp-action="AddReview" asp-controller="Product" method="post" class="mt-3" id="reviewForm">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ProductId" value="@Model.ProductId" />
+                                            <input type="hidden" name="Rating" id="ratingInput" value="0" />
+                                            <div class="mb-3">
+                                                <label class="form-label">Mức đánh giá</label>
+                                                <div class="star-rating" id="starRating">
+                                                    @for (int star = 1; star <= 5; star++)
+                                                    {
+                                                        <i class="bi bi-star" data-rating="@star"></i>
+                                                    }
+                                                </div>
+                                                <small class="text-danger d-none" id="ratingError">Vui lòng chọn số sao đánh giá</small>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                            else if (userReview != null)
+                            {
+                                <div class="alert alert-info" role="alert">
+                                    Bạn đã đánh giá sản phẩm này vào @userReview.CreatedAt.ToString("dd/MM/yyyy").
+                                </div>
+                            }
+                            else if (!hasPurchased)
+                            {
+                                <div class="alert alert-warning" role="alert">
+                                    Mua sản phẩm này để đánh giá
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-light border" role="alert">
+                                <a asp-controller="Account" asp-action="DangNhap" asp-route-returnUrl="/sach/@Model.Slug">Đăng nhập</a> để gửi đánh giá.
+                            </div>
+                        }
+                    </div>
+
+                    @if (orderedReviews.Any())
+                    {
+                        foreach (var review in orderedReviews)
+                        {
+                            var reviewerName = review.User != null && !string.IsNullOrWhiteSpace(review.User.FullName)
+                                ? review.User.FullName
+                                : review.User?.Email ?? "Khách hàng";
+                            var isOwner = userReview != null && review.ReviewId == userReview.ReviewId;
+                            <div class="border rounded p-3 mb-3 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>@reviewerName</strong>
+                                        <div class="text-warning">
+                                            @for (int i = 0; i < 5; i++)
+                                            {
+                                                @if (i < review.Rating)
+                                                {
+                                                    <i class="bi bi-star-fill"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-star"></i>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                @if (isOwner)
+                                {
+                                    <span class="badge bg-secondary mt-2">Đánh giá của bạn</span>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary" role="alert">
+                            Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên chia sẻ cảm nhận của bạn!
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -462,6 +621,42 @@
                     }
                 });
             }
+
+            // Star rating functionality
+            var selectedRating = 0;
+            $('#starRating i').on('click', function() {
+                selectedRating = $(this).data('rating');
+                $('#ratingInput').val(selectedRating);
+                updateStars(selectedRating);
+                $('#ratingError').addClass('d-none');
+            });
+
+            $('#starRating i').on('mouseenter', function() {
+                var hoverRating = $(this).data('rating');
+                updateStars(hoverRating);
+            });
+
+            $('#starRating').on('mouseleave', function() {
+                updateStars(selectedRating);
+            });
+
+            function updateStars(rating) {
+                $('#starRating i').each(function(index) {
+                    if (index < rating) {
+                        $(this).removeClass('bi-star').addClass('bi-star-fill');
+                    } else {
+                        $(this).removeClass('bi-star-fill').addClass('bi-star');
+                    }
+                });
+            }
+
+            $('#reviewForm').on('submit', function(e) {
+                if (selectedRating === 0) {
+                    e.preventDefault();
+                    $('#ratingError').removeClass('d-none');
+                    return false;
+                }
+            });
         });
     </script>
 }

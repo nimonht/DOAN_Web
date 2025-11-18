@@ -461,10 +461,6 @@ namespace DOAN_Web.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
 
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -480,9 +476,10 @@ namespace DOAN_Web.Migrations
 
                     b.HasKey("ReviewId");
 
-                    b.HasIndex("ProductId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ProductId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("Reviews");
                 });

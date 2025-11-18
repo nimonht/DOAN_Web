@@ -63,8 +63,8 @@ namespace DOAN_Web
                     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "An error occurred while initializing the database.");
                 }
-            } */
-
+            } 
+            */
             // Configure the HTTP request pipeline
             if (!app.Environment.IsDevelopment())
             {

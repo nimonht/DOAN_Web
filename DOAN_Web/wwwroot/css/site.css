@@ -381,6 +381,10 @@ body {
     .product-sticky-panel {
         display: block;
     }
+    
+    .product-reviews-section, .related-products-section {
+        max-width: calc(100dvw - 480px);
+    }
 }
 
 .product-sticky-panel.show {
@@ -722,6 +726,27 @@ body {
 
 .rating-stars i:hover {
     transform: scale(1.2);
+}
+
+.star-rating {
+    display: inline-flex;
+    gap: 0.5rem;
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+}
+
+.star-rating i {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.star-rating i.bi-star-fill {
+    color: #ffc107;
+}
+
+.star-rating i:hover {
+    opacity: 0.7;
 }
 
 .review-count {

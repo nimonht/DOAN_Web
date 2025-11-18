@@ -1,6 +1,8 @@
 ﻿@model List<Order>
+@using DOAN_Web.Models
 @{
     ViewData["Title"] = "Đơn hàng của tôi";
+    var userReviews = ViewBag.UserReviews as List<Review> ?? new List<Review>();
 }
 
 <div class="container my-5">
@@ -56,6 +58,15 @@
                                     <div class="flex-grow-1">
                                         <strong>@item.Product.Title</strong><br>
                                         <small class="text-muted">Số lượng: @item.Quantity x @item.UnitPrice.ToString("N0") ₫</small>
+                                        @if (order.Status == "HoanThanh")
+                                        {
+                                            var hasReview = userReviews.Any(r => r.ProductId == item.ProductId);
+                                            <div class="mt-2">
+                                                <a href="/sach/@item.Product.Slug#reviews" class="btn btn-sm @(hasReview ? "btn-outline-secondary" : "btn-outline-primary")">
+                                                    @(hasReview ? "Xem đánh giá" : "Đánh giá sản phẩm")
+                                                </a>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }

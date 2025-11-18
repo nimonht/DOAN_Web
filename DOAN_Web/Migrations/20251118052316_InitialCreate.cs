@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DOAN_Web.Migrations
 {
     /// <inheritdoc />
-    public partial class ConfigureDecimalPrecision : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -411,7 +411,6 @@ namespace DOAN_Web.Migrations
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Rating = table.Column<int>(type: "int", nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -526,9 +525,10 @@ namespace DOAN_Web.Migrations
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Reviews_ProductId",
+                name: "IX_Reviews_ProductId_UserId",
                 table: "Reviews",
-                column: "ProductId");
+                columns: new[] { "ProductId", "UserId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_UserId",
